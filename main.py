@@ -95,7 +95,10 @@ def create_texfile(args, path, filename):
 
 @client.event
 async def on_message(message):
-    if not 'grg-bot' in message.channel.name:
+    try:
+        if not 'grg-bot' in message.channel.name:
+            return
+    except AttributeError:  # happens when someone DMs the botr
         return
 
     if message.author == client.user:
