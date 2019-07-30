@@ -1,0 +1,153 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{grg}[2019/07/29 Gridded Reference Graphic]
+
+\RequirePackage[default]{droidsans}
+\RequirePackage{tikz}
+\RequirePackage{graphicx}
+\RequirePackage{fp} 
+\RequirePackage[export]{adjustbox}
+\RequirePackage{xkeyval} 
+\RequirePackage{ifthen} 
+
+\usetikzlibrary{calc}
+\renewcommand*\familydefault{\sfdefault}
+
+\newdimen\grg@width
+\newdimen\leftlabelwidth
+\newdimen\bottomlabelheight
+
+\setlength\leftlabelwidth{1.2em}
+\setlength\bottomlabelheight{1em}
+\newcounter{ccount}
+\setcounter{ccount}{0}
+
+\define@key{grg}{title}{\def\grg@title{#1}}
+\define@key{grg}{nx}{\def\grg@nx{#1}}
+\define@key{grg}{ny}{\def\grg@ny{#1}}
+\define@key{grg}{ltrim}{\def\grg@ltrim{#1}}
+\define@key{grg}{btrim}{\def\grg@btrim{#1}}
+\define@key{grg}{rtrim}{\def\grg@rtrim{#1}}
+\define@key{grg}{ttrim}{\def\grg@ttrim{#1}}
+\define@key{grg}{width}{\setlength\grg@width{#1}}
+\define@key{grg}{xstart}{\def\grg@xstart{#1}}
+\define@key{grg}{ystart}{\def\grg@ystart{#1}}
+\define@choicekey*{grg}{keypad}{0,1,2,3,4}[1]{\def\grg@keypad{#1}}
+\define@choicekey*{grg}{north}{0,1,2,3,4}[1]{\def\grg@north{#1}}
+
+\setkeys{grg}{%
+  keypad=1,%
+  title={},%
+  xstart=1,%
+  ystart=1,%
+  nx=6,%
+  ny=8,%
+  width=10.5cm,% width of a piece of A6 paper in portrait
+  ltrim=0,%
+  btrim=0,%
+  rtrim=0,%
+  ttrim=0,%
+  north=3,
+}
+
+\newcommand\grg[2][]{%
+  \setkeys{grg}{#1}%
+  \FPeval\grg@xstep{1/\grg@nx}%
+  \FPeval\grg@ystep{1/\grg@ny}%
+  \FPeval\grg@xkeypad{\grg@xstep/3}%
+  \FPeval\grg@ykeypad{\grg@ystep/3}%
+  \FPeval\grg@xkeypadlabel{0.5*\grg@xstep}%
+  \ifthenelse{\grg@keypad=0}{%
+    \def\grg@keypadXstart{-1}%
+    \def\grg@keypadYstart{-1}%
+  }{%
+    \ifthenelse{\grg@keypad=1}{%
+      \def\grg@keypadXstart{0}%
+      \def\grg@keypadYstart{0}%
+    }{%
+      \ifthenelse{\grg@keypad=2}{%
+        \FPeval\grg@keypadXstart{1-\grg@xstep}%
+        \def\grg@keypadYstart{0}%
+      }{%
+        \ifthenelse{\grg@keypad=3}{%
+          \FPeval\grg@keypadXstart{1-\grg@xstep}%
+          \FPeval\grg@keypadYstart{1-\grg@ystep}%
+        }{%
+          \def\grg@keypadXstart{0}%
+          \FPeval\grg@keypadYstart{1-\grg@ystep}%
+        }%
+      }%
+    }%
+    \FPeval\grg@keypadXend{\grg@keypadXstart+\grg@xstep}%
+    \FPeval\grg@keypadYend{\grg@keypadYstart+\grg@ystep}%
+  }%
+  \FPeval\grg@xend{\grg@xstart+\grg@nx-1}%
+  \FPeval\grg@yend{\grg@ystart+\grg@ny-1}%
+%
+  \begin{tikzpicture}%
+    \node[anchor=south west,inner sep=0] (image) at (0, 0) {\adjincludegraphics[width=\grg@width, trim={\grg@ltrim\width} {\grg@btrim\height} {\grg@rtrim\width} {\grg@ttrim\height},clip]{#2}};%
+    \begin{scope}[x={(image.south east)},y={(image.north west)}]%
+      % the addition of 0.1pt makes sure that the outmost lines are drawn (workaround)
+      % major grid
+      \draw[xstep=\grg@xstep,ystep=\grg@ystep] (0,0) grid ($(1,1) + (0.1pt,0.1pt)$);%
+      % x exterior grid
+      \draw[xstep=\grg@xstep,ystep=\bottomlabelheight] (0,0) grid ($(1,0) - (0,\bottomlabelheight) + (0.1pt,0)$);%
+      % y exterior grid
+      \draw[xstep=\leftlabelwidth,ystep=\grg@ystep] (0,0) grid ($(-\leftlabelwidth,1.00) + (-0.1pt,0.1pt)$);%
+      % x grid labels
+      \foreach \x in {1,...,\grg@nx} {%
+        \FPeval\grg@tmp{\x+\grg@xstart-1}
+        \setcounter{ccount}{\grg@tmp}%
+        \FPeval\grg@xgridlabelpos{(\x-0.5)/\grg@nx}%
+        \node [inner sep=0] at (\grg@xgridlabelpos, -0.5*\bottomlabelheight) {\Alph{ccount}};%
+      }%
+      % y grid labels
+      \foreach \y in {1,...,\grg@ny} {%
+        \FPeval\grg@tmp{round(\y+\grg@ystart-1:0)}
+        \FPeval\grg@ygridlabelpos{(\y-0.5)/\grg@ny}%
+        \node [inner sep=0] at (-0.5*\leftlabelwidth, \grg@ygridlabelpos) {\grg@tmp};%
+      }%
+      % title
+      \node [anchor=south] at (0.5,1) {\grg@title};%
+      % keypad template
+      \ifthenelse{\grg@keypad=0}{}{%
+        \draw[xstep=\grg@xkeypad,ystep=\grg@ykeypad] (\grg@keypadXstart,\grg@keypadYstart) grid (\grg@keypadXend,\grg@keypadYend);%
+        \foreach \x in {0,1,2} {%
+          \foreach \y in {0,1,2} {%
+            \FPeval\keypadi{round(\x+1+3*\y:0)}%
+            \node at ($ \grg@keypadXstart*(1,0) + \grg@keypadYstart*(0,1) + 0.5*(\grg@xkeypad,0)+2.5*(0,\grg@ykeypad) - \grg@ykeypad*(0,\y) + \grg@xkeypad*(\x,0) $) {\FPprint\keypadi};%
+          };%
+        };%
+        % keypad label above template for keypad = 1 or 2, below template for keypad = 3 or 4
+        \ifthenelse{\grg@keypad=1 \or \grg@keypad=2}{%
+          \node [anchor=south, inner sep=0.25ex] at ($ \grg@keypadXstart*(1,0) + \grg@keypadYstart*(0,1) + \grg@xkeypad*(1.5,0) + \grg@ykeypad*(0,3)$) {\small KEYPAD};%
+        }{%
+          \node [anchor=north, inner sep=0.25ex] at ($ \grg@keypadXstart*(1,0) + \grg@keypadYstart*(0,1) + \grg@xkeypad*(1.5,0)$) {\small KEYPAD};%
+        }%
+      }%
+      % north indicator
+      \ifthenelse{\grg@north=0}{}{%
+        \ifthenelse{\grg@north=1}{%
+          \FPeval\grg@northXnode{0.5*\grg@xstep}%
+          \FPeval\grg@northYnode{0.5*\grg@ystep}%
+        }{%
+          \ifthenelse{\grg@north=2}{%
+            \FPeval\grg@northXnode{1-0.5*\grg@xstep}%
+            \FPeval\grg@northYnode{0.5*\grg@ystep}%
+          }{%
+            \ifthenelse{\grg@north=3}{%
+              \FPeval\grg@northXnode{1-0.5*\grg@xstep}%
+              \FPeval\grg@northYnode{1-0.5*\grg@ystep}%
+            }{%
+              \FPeval\grg@northXnode{0.5*\grg@xstep}%
+              \FPeval\grg@northYnode{1-0.5*\grg@ystep}%
+              }%
+            }%
+          }%
+        \node (north) at ($ \grg@northXnode*(1,0) +\grg@northYnode*(0,1)$) {\Large N};%
+        \draw [->,thick] ($(north) - 0.35*\grg@ystep*(0,1) $) -- ($(north) + 0.35*\grg@ystep*(0,1) $);%
+      }%
+    \end{scope}%
+  \end{tikzpicture}%
+}%
+
+% vim: nospell
