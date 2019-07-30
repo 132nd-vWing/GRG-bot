@@ -15,6 +15,7 @@ RUN ln -s /root/grg-test.tex .
 ADD grg.sty /tmp
 # Test the latex installation
 RUN /usr/local/texlive/2019/bin/x86_64-linux/pdflatex grg-test.tex && rm -rf /tmp/* 
+RUN rm -f /etc/imageMagick-7/policy.xml
 
 ADD main.py grg.sty config.py /app/
 WORKDIR /app
