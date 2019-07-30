@@ -1,15 +1,13 @@
 #!/usr/bin/python
 
 import discord
-import tempfile
+import glob
+import os
 import shutil
 import subprocess
-import os
-import glob
+import tempfile
 
 import config
-
-client = discord.Client()
 
 H_PAGES = 'h_pages'
 V_PAGES = 'v_pages'
@@ -19,6 +17,8 @@ NORTH = 'north'
 NX = 'nx'
 NY = 'ny'
 VALID_KEYWORDS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY)
+
+client = discord.Client()
 
 @client.event
 async def on_ready():
@@ -156,4 +156,4 @@ async def on_message(message):
         await message.channel.send('Yes?')
         return
 
-client.run('NjA1Njk2MDQ5NzI1NTcxMDcz.XUAQiw.MRDpJuQlL1JvkwqRrNawV1AK3gM')
+client.run(config.TOKEN)
