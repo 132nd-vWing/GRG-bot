@@ -95,6 +95,9 @@ def create_texfile(args, path, filename):
 
 @client.event
 async def on_message(message):
+    if not 'grg-bot' in message.channel.name:
+        return
+
     if message.author == client.user:
         return
 
