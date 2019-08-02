@@ -3,14 +3,14 @@
 FROM ubuntu:disco AS builder
 
 WORKDIR /tmp
-RUN apt update && apt install -y perl wget fontconfig && apt clean
-RUN wget --quiet http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
-RUN tar -xf install-tl-unx.tar.gz
 ADD texlive.profile /tmp/
-RUN cd install-tl-2019* && ./install-tl -profile ../texlive.profile && rm -rf /tmp/* 
-RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr install latex-bin pdftex latex standalone xkeyval fp adjustbox pgf collectbox xcolor tex-gyre oberdiek ifluatex graphics graphics-def
+RUN apt update && apt install -y perl wget fontconfig && apt clean && \
+    wget --quiet http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
+    tar -xf install-tl-unx.tar.gz && \
+    cd install-tl-2019* && ./install-tl -profile ../texlive.profile && rm -rf /tmp/*  
+RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr install latex-bin pdftex latex standalone xkeyval fp adjustbox pgf collectbox xcolor tex-gyre oberdiek ifluatex graphics graphics-def && \
 # we needed the glibc version only for bootstrapping
-RUN rm -rf /usr/local/texlive/2019/bin/x86_64-linux
+    rm -rf /usr/local/texlive/2019/bin/x86_64-linux
 
 FROM alpine:latest AS final
 
@@ -19,10 +19,10 @@ RUN apk add --no-cache python3 imagemagick ghostscript && pip3 install discord &
 ENV PATH="/usr/local/texlive/2019/bin/x86_64-linuxmusl:${PATH}"
 
 FROM final AS tester
-RUN /usr/bin/python3 -c 'import discord' && convert -version > /dev/null && gs -v > /dev/null
 WORKDIR /tmp
 ADD --chown=nobody:nobody grg.sty grg-test.tex map.png /tmp/
-RUN pdflatex -shell-escape grg-test.tex > /dev/null 
+RUN /usr/bin/python3 -c 'import discord' && convert -version > /dev/null && gs -v > /dev/null && \
+    pdflatex -shell-escape grg-test.tex > /dev/null && rm -rf /tmp/*
 
 FROM final
 WORKDIR /app
