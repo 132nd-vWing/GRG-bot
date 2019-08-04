@@ -16,7 +16,8 @@ KEYPAD = 'keypad'
 NORTH = 'north'
 NX = 'nx'
 NY = 'ny'
-VALID_KEYWORDS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY)
+WIDTH = 'width'
+VALID_KEYWORDS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY, WIDTH)
 
 client = discord.Client()
 
@@ -41,6 +42,7 @@ def parse_args(content):
         NORTH: 3,
         NX: 6,
         NY: 8,
+        WIDTH: '10.5cm'
     }
     argv = content.split(',')
     if len(argv) == 1 and not '=' in argv[0]:
@@ -84,9 +86,9 @@ def create_texfile(args, path, filename):
                 fd.write('\\begin{myenv}\pagecolor{white}\grg')
                 fd.write(
                     '[title={{{}}},keypad={},north={},ltrim={},rtrim={},ttrim={},btrim={},\
-                    xstart={},ystart={},nx={},ny={}]{{{}}}'.format(
+                    xstart={},ystart={},nx={},ny={}, width={}]{{{}}}'.format(
                     title, args[KEYPAD], args[NORTH], ltrim, rtrim ,ttrim, btrim,
-                        xstart, ystart, args[NX], args[NY], filename)
+                        xstart, ystart, args[NX], args[NY], args[WIDTH], filename)
                 )
                 fd.write('\\end{myenv}%\n')
                 page += 1
@@ -109,7 +111,7 @@ async def on_message(message):
 
     if 'help' in message.content.lower():
         reply = 'Upload an image, and put "!grg" in the message.\n'
-        reply += 'I understand the following keywords: h_pages, v_pages, title, keypad, north, nx, ny.\n'
+        reply += 'I understand the following keywords: h_pages, v_pages, title, keypad, north, nx, ny, width.\n'
         reply += 'Each keyword must be followed by "=" and the value. Multiple keywords must be separated by comma.\n'
         reply += 'Example: !grg title = AO Charlie, h_pages = 2, ny=10'
         await message.channel.send(reply)
