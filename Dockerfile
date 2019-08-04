@@ -21,8 +21,8 @@ ENV PATH="/usr/local/texlive/2019/bin/x86_64-linuxmusl:${PATH}"
 FROM final AS tester
 WORKDIR /tmp
 ADD --chown=nobody:nobody grg.sty grg-test.tex map.png /tmp/
-RUN /usr/bin/python3 -c 'import discord' && convert -version > /dev/null && gs -v > /dev/null && \
-    pdflatex -shell-escape grg-test.tex > /dev/null && rm -rf /tmp/*
+RUN /usr/bin/python3 -c 'import discord' && convert -version && gs -v && \
+    pdflatex -halt-on-error -shell-escape grg-test.tex && rm -rf /tmp/*
 
 FROM final
 WORKDIR /app

@@ -1,5 +1,8 @@
+%! Suppress = NonMatchingIf
+%! Suppress = NonMatchingIf
+%! Suppress = NonMatchingIf
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{grg}[2019/07/29 Gridded Reference Graphic]
+\ProvidesPackage{grg}[2019/08/04 Gridded Reference Graphic]
 
 \RequirePackage{tgheros}
 \RequirePackage{tikz}
@@ -10,6 +13,7 @@
 \RequirePackage{ifthen} 
 
 \usetikzlibrary{calc}
+\usetikzlibrary{arrows.meta}
 \renewcommand*\familydefault{\sfdefault}
 
 \newdimen\grg@width
@@ -31,6 +35,8 @@
 \define@key{grg}{width}{\setlength\grg@width{#1}}
 \define@key{grg}{xstart}{\def\grg@xstart{#1}}
 \define@key{grg}{ystart}{\def\grg@ystart{#1}}
+\define@key{grg}{scale}{\def\grg@scale{#1}}
+\define@key{grg}{scalecorner}{\def\grg@scalecorner{#1}}
 \define@choicekey*{grg}{keypad}{0,1,2,3,4}[1]{\def\grg@keypad{#1}}
 \define@choicekey*{grg}{north}{0,1,2,3,4}[1]{\def\grg@north{#1}}
 
@@ -46,7 +52,9 @@
   btrim=0,%
   rtrim=0,%
   ttrim=0,%
-  north=3,
+  north=3,%
+  scale=0.0,%
+  scalecorner=2,%
 }
 
 \newcommand\grg[2][]{%
@@ -144,7 +152,30 @@
             }%
           }%
         \node (north) at ($ \grg@northXnode*(1,0) +\grg@northYnode*(0,1)$) {\Large N};%
-        \draw [->,thick] ($(north) - 0.35*\grg@ystep*(0,1) $) -- ($(north) + 0.35*\grg@ystep*(0,1) $);%
+        \draw [-Latex,thick] ($(north) - 0.35*\grg@ystep*(0,1) $) -- ($(north) + 0.35*\grg@ystep*(0,1) $);%
+      }%
+      % scale corner
+      \ifthenelse{\grg@scalecorner=0}{}{%
+        \ifthenelse{\grg@scalecorner=1}{%
+          \FPeval\grg@scaleXnode{0}%
+          \FPeval\grg@scaleYnode{0}%
+        }{%
+          \ifthenelse{\grg@scalecorner=2}{%
+            \FPeval\grg@scaleXnode{1-\grg@xstep}%
+            \FPeval\grg@scaleYnode{0}%
+          }{%
+            \ifthenelse{\grg@scalecorner=3}{%
+              \FPeval\grg@scaleXnode{1-\grg@xstep}%
+              \FPeval\grg@scaleYnode{1-\grg@ystep}%
+            }{%
+              \FPeval\grg@scaleXnode{0}%
+              \FPeval\grg@scaleYnode{1-\grg@ystep}%
+            }%
+          }%
+        }%
+      \node (scale) at ($ \grg@scaleXnode*(1,0) +\grg@scaleYnode*(0,1)$) {};%
+      \draw [Latex-Latex,thick] ($(scale) + 0.2*\grg@ystep*(0,1) $) -- ($(scale) + 0.2*\grg@ystep*(0,1)  + \grg@xstep*(1,0)$)%
+        node[midway,above,pos=0.65]{{\scriptsize\grg@scale}};%
       }%
     \end{scope}%
   \end{tikzpicture}%

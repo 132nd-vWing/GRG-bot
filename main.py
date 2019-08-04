@@ -17,7 +17,9 @@ NORTH = 'north'
 NX = 'nx'
 NY = 'ny'
 WIDTH = 'width'
-VALID_KEYWORDS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY, WIDTH)
+SCALE = 'scale'
+SCALE_CORNER = 'scalecorner'
+VALID_KEYWORDS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY, WIDTH, SCALE)
 
 client = discord.Client()
 
@@ -29,7 +31,7 @@ async def on_ready():
 def parse_args(content):
     """
     arguments must be comma separated
-    understood keywords are h_pages, v_pages, title, keypad, north
+    understood keywords are defined in VALID_KEYWORDS
 
     :param content:
     :return: dict of arguments
@@ -42,7 +44,9 @@ def parse_args(content):
         NORTH: 3,
         NX: 6,
         NY: 8,
-        WIDTH: '10.5cm'
+        WIDTH: '10.5cm',
+        SCALE: 0.0,
+        SCALE_CORNER: 2,
     }
     argv = content.split(',')
     if len(argv) == 1 and not '=' in argv[0]:
@@ -55,6 +59,7 @@ def parse_args(content):
             args[keyword] = val
     for keyword in (H_PAGES, V_PAGES, KEYPAD, NORTH, NX, NY):
         args[keyword] = int(args[keyword])
+    args[SCALE] = float(args[SCALE])
     return args
 
 def create_texfile(args, path, filename):
@@ -68,7 +73,6 @@ def create_texfile(args, path, filename):
 \\usepackage{grg}%
 \\begin{document}%
 ''')
-        ltrim, rtrim, ttrim, btrim = (0.0, 0.0, 0.0, 0.0)
         number_pages = args[H_PAGES] * args[V_PAGES]
         page = 1
         for v in range(args[V_PAGES]):
@@ -84,11 +88,14 @@ def create_texfile(args, path, filename):
                 xstart = int(h * args[NX]) + 1
                 ystart = int(v * args[NY]) + 1
                 fd.write('\\begin{myenv}\pagecolor{white}\grg')
+                scale = str(round(args[SCALE] / (args[NX] * args[H_PAGES]), 2)) + '\,nm'
                 fd.write(
                     '[title={{{}}},keypad={},north={},ltrim={},rtrim={},ttrim={},btrim={},\
-                    xstart={},ystart={},nx={},ny={}, width={}]{{{}}}'.format(
-                    title, args[KEYPAD], args[NORTH], ltrim, rtrim ,ttrim, btrim,
-                        xstart, ystart, args[NX], args[NY], args[WIDTH], filename)
+                    xstart={},ystart={},nx={},ny={}, width={}, scale={}, \
+                    scalecorner={}]{{{}}}'.format(
+                        title, args[KEYPAD], args[NORTH], ltrim, rtrim ,ttrim, btrim,
+                        xstart, ystart, args[NX], args[NY], args[WIDTH],
+                        scale, args[SCALE_CORNER], filename)
                 )
                 fd.write('\\end{myenv}%\n')
                 page += 1
@@ -100,7 +107,7 @@ async def on_message(message):
     try:
         if not 'grg-bot' in message.channel.name:
             return
-    except AttributeError:  # happens when someone DMs the botr
+    except AttributeError:  # happens when someone DMs the bot
         return
 
     if message.author == client.user:
@@ -140,13 +147,13 @@ async def on_message(message):
             os.symlink(os.path.join(config.BOTDIR, 'grg.sty'), 'grg.sty')
             create_texfile(args, workdir, filename)
         except Exception as e:
-            await message.channel.send('I could not prepare the conversion. Call @132nd.Professor or @132nd.Fudd.')
+            await message.channel.send('I could not prepare the conversion. Call @132nd.Professor.')
             print(e)
             return
         try:
             print('Converting')
             subprocess.call(
-                [config.LATEX, '-shell-escape', 'grg.tex'],
+                [config.LATEX, '-halt-on-error', '-shell-escape', 'grg.tex'],
                 stdout=open(os.devnull, 'w')
             )
             files = glob.glob(workdir + 'grg*.png') + [workdir + 'grg.pdf']
@@ -155,7 +162,7 @@ async def on_message(message):
             for file in files:
                 await message.channel.send(file=discord.File(file))
         except Exception as e:
-            await message.channel.send('I could not process the image. Call @132nd.Professor or @132nd.Fudd.')
+            await message.channel.send('I could not process the image. Call @132nd.Professor.')
             print(e)
             return
         finally:
