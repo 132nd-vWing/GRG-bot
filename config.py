@@ -1,5 +1,3 @@
 LATEX = 'pdflatex'
 BOTDIR = '/app/'
-TOKEN = 'TOKEN-HERE'
 P7ZIP = '7z'
-AUTHOR_ID = '<@012345678901234567>'

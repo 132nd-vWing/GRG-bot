@@ -154,7 +154,7 @@ async def on_message(message):
             os.symlink(os.path.join(config.BOTDIR, 'grg.sty'), 'grg.sty')
             create_texfile(args, workdir, filename)
         except Exception as e:
-            await message.channel.send('I could not prepare the conversion. Pinging {}.'.format(config.AUTHOR_ID))
+            await message.channel.send('I could not prepare the conversion. Pinging {}.'.format(os.environ['AUTHOR_ID']))
             print(e, traceback.format_exc())
             return
         with open(os.devnull, 'w') as FNULL:
@@ -165,7 +165,7 @@ async def on_message(message):
                     stdout=FNULL
                 )
             except Exception as e:
-                await message.channel.send('I could not process the image. Pinging {}.'.format(config.AUTHOR_ID))
+                await message.channel.send('I could not process the image. Pinging {}.'.format(os.environ['AUTHOR_ID']))
                 print(e, traceback.format_exc())
                 shutil.rmtree(workdir)
                 return
@@ -178,7 +178,7 @@ async def on_message(message):
                 )
                 await message.channel.send(file=discord.File(workdir + 'grg.zip'))
             except Exception as e:
-                await message.channel.send('I could not zip and send the files. Pinging {}.'.format(config.AUTHOR_ID))
+                await message.channel.send('I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID']))
                 print(e, traceback.format_exc())
                 return
             finally:
@@ -188,4 +188,4 @@ async def on_message(message):
         await message.channel.send('Yes?')
         return
 
-client.run(config.TOKEN)
+client.run(os.environ['TOKEN'])
