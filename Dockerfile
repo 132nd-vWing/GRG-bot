@@ -30,7 +30,13 @@ RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr install \
 FROM alpine:latest AS final
 
 COPY --from=builder /usr/local/texlive/ /usr/local/texlive
-RUN apk add --no-cache python3 imagemagick ghostscript && pip3 install discord && rm -rf /root/.cache/pip
+RUN apk add --no-cache \
+    python3 \
+    imagemagick \
+    ghostscript \
+    p7zip \
+    && pip3 install discord \
+    && rm -rf /root/.cache/pip
 ENV PATH="/usr/local/texlive/2019/bin/x86_64-linuxmusl:${PATH}"
 
 FROM final AS tester

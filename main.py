@@ -133,12 +133,12 @@ async def on_message(message):
         print('Received {} from {}'.format(attachment.filename, message.author))
         filename = attachment.filename
         basename, filetype = filename.split('.')
-        if basename[:2].lower() == 'grg':
+        if basename[:3].lower() == 'grg':
             await message.channel.send('Your filename cannot begin with grg.')
+            return
         if filetype.lower() not in ('png', 'pdf', 'tif', 'tiff', 'jpg'):
             await message.channel.send('I cannot handle {} files.'.format(filetype))
             return
-
         try:
             args = parse_args(message.content[4:])  # remove leading '!grg'
         except Exception as e:
@@ -155,23 +155,34 @@ async def on_message(message):
             await message.channel.send('I could not prepare the conversion. Call @132nd.Professor.')
             print(e, traceback.format_exc())
             return
-        try:
-            print('Converting')
-            subprocess.call(
-                [config.LATEX, '-halt-on-error', '-shell-escape', 'grg.tex'],
-                stdout=open(os.devnull, 'w')
-            )
-            files = glob.glob(workdir + 'grg*.png') + [workdir + 'grg.pdf']
-            files.sort()
-            print('Sending {} files: {}'.format(len(files), files))
-            for file in files:
-                await message.channel.send(file=discord.File(file))
-        except Exception as e:
-            await message.channel.send('I could not process the image. Call @132nd.Professor.')
-            print(e, traceback.format_exc())
-            return
-        finally:
-            shutil.rmtree(workdir)
+        with open(os.devnull, 'w') as FNULL:
+            try:
+                print('Converting')
+                subprocess.call(
+                    [config.LATEX, '-halt-on-error', '-shell-escape', 'grg.tex'],
+                    stdout=FNULL
+                )
+            except Exception as e:
+                await message.channel.send('I could not process the image. Call @132nd.Professor.')
+                print(e, traceback.format_exc())
+                shutil.rmtree(workdir)
+                return
+            try:
+                files = glob.glob(workdir + 'grg*.png') + [workdir + 'grg.pdf']
+                files.sort()
+                print([config.P7ZIP, 'a', '-tzip', 'grg.zip'] + files)
+                subprocess.call(
+                    [config.P7ZIP, 'a', '-tzip', 'grg.zip'] + files,
+                    stdout=FNULL
+                )
+                await message.channel.send(file=discord.File(workdir + 'grg.zip'))
+            except Exception as e:
+                await message.channel.send('I could not zip and send the files. Call @132nd.Professor.')
+                print(e, traceback.format_exc())
+                return
+            finally:
+                shutil.rmtree(workdir)
+
     if len(message.attachments) == 0:
         await message.channel.send('Yes?')
         return
