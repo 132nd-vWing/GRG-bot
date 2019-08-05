@@ -2,12 +2,12 @@
 %! Suppress = NonMatchingIf
 %! Suppress = NonMatchingIf
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{grg}[2019/08/04 Gridded Reference Graphic]
+\ProvidesPackage{grg}[2019/08/05 Gridded Reference Graphic]
 
 \RequirePackage{tgheros}
 \RequirePackage{tikz}
 \RequirePackage{graphicx}
-\RequirePackage{fp} 
+\RequirePackage{fp}
 \RequirePackage[export]{adjustbox}
 \RequirePackage{xkeyval} 
 \RequirePackage{ifthen} 
@@ -19,11 +19,22 @@
 \newdimen\grg@width
 \newdimen\leftlabelwidth
 \newdimen\bottomlabelheight
+\def\grg@meterPerMile{1852}
 
 \setlength\leftlabelwidth{1.2em}
 \setlength\bottomlabelheight{1em}
 \newcounter{ccount}
 \setcounter{ccount}{0}
+
+\newcount\boxheight
+\newcount\boxwidth
+\newcommand\testaspect[1]{%
+  \setbox0=\hbox{#1}%
+  \boxheight=\ht0\relax%
+  \boxwidth=\wd0\relax%
+  \FPdiv\theaspect{\the\boxheight}{\the\boxwidth}%
+  \copy0%
+}
 
 \define@key{grg}{title}{\def\grg@title{#1}}
 \define@key{grg}{nx}{\def\grg@nx{#1}}
@@ -35,7 +46,7 @@
 \define@key{grg}{width}{\setlength\grg@width{#1}}
 \define@key{grg}{xstart}{\def\grg@xstart{#1}}
 \define@key{grg}{ystart}{\def\grg@ystart{#1}}
-\define@key{grg}{scale}{\def\grg@scale{#1}}
+\define@key{grg}{scalex}{\def\grg@scalex{#1}}
 \define@key{grg}{scalecorner}{\def\grg@scalecorner{#1}}
 \define@choicekey*{grg}{keypad}{0,1,2,3,4}[1]{\def\grg@keypad{#1}}
 \define@choicekey*{grg}{north}{0,1,2,3,4}[1]{\def\grg@north{#1}}
@@ -53,7 +64,7 @@
   rtrim=0,%
   ttrim=0,%
   north=3,%
-  scale=0.0,%
+  scalex=0.0,%
   scalecorner=2,%
 }
 
@@ -92,7 +103,7 @@
   \FPeval\grg@yend{\grg@ystart+\grg@ny-1}%
 %
   \begin{tikzpicture}%
-    \node[anchor=south west,inner sep=0] (image) at (0, 0) {\adjincludegraphics[width=\grg@width, trim={\grg@ltrim\width} {\grg@btrim\height} {\grg@rtrim\width} {\grg@ttrim\height},clip]{#2}};%
+    \node[anchor=south west,inner sep=0] (image) at (0, 0) {\testaspect{\adjincludegraphics[width=\grg@width, trim={\grg@ltrim\width} {\grg@btrim\height} {\grg@rtrim\width} {\grg@ttrim\height},clip]{#2}}\global\let\theaspect\theaspect};%
     \begin{scope}[x={(image.south east)},y={(image.north west)}]%
       % the addition of 0.1pt makes sure that the outmost lines are drawn (workaround)
       % major grid
@@ -174,8 +185,19 @@
           }%
         }%
       \node (scale) at ($ \grg@scaleXnode*(1,0) +\grg@scaleYnode*(0,1)$) {};%
-      \draw [Latex-Latex,thick] ($(scale) + 0.2*\grg@ystep*(0,1) $) -- ($(scale) + 0.2*\grg@ystep*(0,1)  + \grg@xstep*(1,0)$)%
-        node[midway,above,pos=0.65]{{\scriptsize\grg@scale}};%
+      \FPeval\grg@scalexMeter{round(\grg@scalex*\grg@meterPerMile:0)}
+      \draw [Latex-Latex,thick]%
+        ($(scale) + 0.2*\grg@ystep*(0,1) $) --%
+        ($(scale) + 0.2*\grg@ystep*(0,1)  + \grg@xstep*(1,0)$)%
+        node[above,pos=0.65]{{\scriptsize\grg@scalex\,nm}}%
+        node[below,pos=0.65]{{\scriptsize\grg@scalexMeter\,m}};%
+      \FPeval\grg@scaley{round(\grg@scalex*\theaspect:2)}
+      \FPeval\grg@scaleyMeter{round(\grg@scaley*\grg@meterPerMile:0)}
+      \draw [Latex-Latex,thick]%
+        ($(scale) + 0.2*\grg@xstep*(1,0) $) --%
+        ($(scale) + 0.2*\grg@xstep*(1,0)  + \grg@ystep*(0,1)$)%
+        node[above,pos=0.65,rotate=90]{{\scriptsize\grg@scaley\,nm}}%
+        node[below,pos=0.65,rotate=90]{{\scriptsize\grg@scaleyMeter\,m}};%
       }%
     \end{scope}%
   \end{tikzpicture}%

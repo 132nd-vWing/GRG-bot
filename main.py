@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import traceback
 
 import config
 
@@ -19,9 +20,10 @@ NY = 'ny'
 WIDTH = 'width'
 SCALE = 'scale'
 SCALE_CORNER = 'scalecorner'
-VALID_KEYWORDS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY, WIDTH, SCALE)
+VALID_KEYWORDS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY, WIDTH, SCALE, SCALE_CORNER)
 
 client = discord.Client()
+
 
 @client.event
 async def on_ready():
@@ -46,10 +48,10 @@ def parse_args(content):
         NY: 8,
         WIDTH: '10.5cm',
         SCALE: 0.0,
-        SCALE_CORNER: 2,
+        SCALE_CORNER: 0,
     }
     argv = content.split(',')
-    if len(argv) == 1 and not '=' in argv[0]:
+    if len(argv) == 1 and '=' not in argv[0]:
         return args
     for arg in argv:
         keyword, val = arg.split('=')
@@ -57,22 +59,25 @@ def parse_args(content):
         val.strip().lower()
         if keyword in VALID_KEYWORDS:
             args[keyword] = val
-    for keyword in (H_PAGES, V_PAGES, KEYPAD, NORTH, NX, NY):
+    for keyword in (H_PAGES, V_PAGES, KEYPAD, NORTH, NX, NY, SCALE_CORNER):
         args[keyword] = int(args[keyword])
     args[SCALE] = float(args[SCALE])
+    if (args[SCALE] > 0.01) and (args[SCALE_CORNER] == 0):
+        args[SCALE_CORNER] = 2
     return args
+
 
 def create_texfile(args, path, filename):
     with open(os.path.join(path, 'grg.tex'), 'w') as fd:
         fd.write(
-'''\documentclass[%
-  convert={true,density=300},%
-  multi=myenv,%
-  crop%
-]{standalone}%
-\\usepackage{grg}%
-\\begin{document}%
-''')
+            r'''\documentclass[%
+              convert={true,density=300},%
+              multi=myenv,%
+              crop%
+            ]{standalone}%
+            \usepackage{grg}%
+            \begin{document}%
+            ''')
         number_pages = args[H_PAGES] * args[V_PAGES]
         page = 1
         for v in range(args[V_PAGES]):
@@ -87,25 +92,25 @@ def create_texfile(args, path, filename):
                 ttrim = (1 - (v+1) / args[V_PAGES])
                 xstart = int(h * args[NX]) + 1
                 ystart = int(v * args[NY]) + 1
-                fd.write('\\begin{myenv}\pagecolor{white}\grg')
-                scale = str(round(args[SCALE] / (args[NX] * args[H_PAGES]), 2)) + '\,nm'
+                fd.write(r'\begin{myenv}\pagecolor{white}\grg')
+                scale = str(round(args[SCALE] / (args[NX] * args[H_PAGES]), 2))
                 fd.write(
                     '[title={{{}}},keypad={},north={},ltrim={},rtrim={},ttrim={},btrim={},\
-                    xstart={},ystart={},nx={},ny={}, width={}, scale={}, \
+                    xstart={},ystart={},nx={},ny={}, width={}, scalex={}, \
                     scalecorner={}]{{{}}}'.format(
-                        title, args[KEYPAD], args[NORTH], ltrim, rtrim ,ttrim, btrim,
+                        title, args[KEYPAD], args[NORTH], ltrim, rtrim, ttrim, btrim,
                         xstart, ystart, args[NX], args[NY], args[WIDTH],
                         scale, args[SCALE_CORNER], filename)
                 )
-                fd.write('\\end{myenv}%\n')
+                fd.write(r'\end{myenv}%' + '\n')
                 page += 1
-        fd.write('\end{document}')
+        fd.write(r'\end{document}')
 
 
 @client.event
 async def on_message(message):
     try:
-        if not 'grg-bot' in message.channel.name:
+        if 'grg-bot' not in message.channel.name:
             return
     except AttributeError:  # happens when someone DMs the bot
         return
@@ -130,7 +135,7 @@ async def on_message(message):
         basename, filetype = filename.split('.')
         if basename[:2].lower() == 'grg':
             await message.channel.send('Your filename cannot begin with grg.')
-        if filetype.lower() not in  ('png', 'pdf', 'tif', 'tiff', 'jpg'):
+        if filetype.lower() not in ('png', 'pdf', 'tif', 'tiff', 'jpg'):
             await message.channel.send('I cannot handle {} files.'.format(filetype))
             return
 
@@ -138,7 +143,7 @@ async def on_message(message):
             args = parse_args(message.content[4:])  # remove leading '!grg'
         except Exception as e:
             await message.channel.send('I could not parse the arguments. Please check.')
-            print(e)
+            print(e, traceback.format_exc())
             return
         try:
             workdir = tempfile.mkdtemp() + '/'
@@ -148,7 +153,7 @@ async def on_message(message):
             create_texfile(args, workdir, filename)
         except Exception as e:
             await message.channel.send('I could not prepare the conversion. Call @132nd.Professor.')
-            print(e)
+            print(e, traceback.format_exc())
             return
         try:
             print('Converting')
@@ -163,7 +168,7 @@ async def on_message(message):
                 await message.channel.send(file=discord.File(file))
         except Exception as e:
             await message.channel.send('I could not process the image. Call @132nd.Professor.')
-            print(e)
+            print(e, traceback.format_exc())
             return
         finally:
             shutil.rmtree(workdir)
