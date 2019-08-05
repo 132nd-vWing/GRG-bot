@@ -1,4 +1,4 @@
 # GRG-bot
 Gridded Reference Graphics (GRG) bot
 
-Insert the bot's token into `config.py` before building container.
+Build the docker image using `build.sh`, insert the bot's token and your own user-ID into `environment` and run it using `run.sh`.
