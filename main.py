@@ -170,7 +170,6 @@ async def on_message(message):
             try:
                 files = glob.glob(workdir + 'grg*.png') + [workdir + 'grg.pdf']
                 files.sort()
-                print([config.P7ZIP, 'a', '-tzip', 'grg.zip'] + files)
                 subprocess.call(
                     [config.P7ZIP, 'a', '-tzip', 'grg.zip'] + files,
                     stdout=FNULL
