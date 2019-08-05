@@ -8,7 +8,22 @@ RUN apt update && apt install -y perl wget fontconfig && apt clean && \
     wget --quiet http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
     tar -xf install-tl-unx.tar.gz && \
     cd install-tl-2019* && ./install-tl -profile ../texlive.profile && rm -rf /tmp/*  
-RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr install latex-bin pdftex latex standalone xkeyval fp adjustbox pgf collectbox xcolor tex-gyre oberdiek ifluatex graphics graphics-def && \
+RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr install \
+    latex-bin \
+    pdftex \
+    latex \
+    standalone \
+    xkeyval \
+    fp \
+    adjustbox \
+    pgf \
+    collectbox \
+    xcolor \
+    tex-gyre \
+    oberdiek \
+    ifluatex \
+    graphics \
+    graphics-def && \
 # we needed the glibc version only for bootstrapping
     rm -rf /usr/local/texlive/2019/bin/x86_64-linux
 
