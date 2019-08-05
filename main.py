@@ -59,6 +59,8 @@ def parse_args(content):
         val.strip().lower()
         if keyword in VALID_KEYWORDS:
             args[keyword] = val
+        else:
+            raise ValueError('I did not understand the keyword {}'.format(keyword))
     for keyword in (H_PAGES, V_PAGES, KEYPAD, NORTH, NX, NY, SCALE_CORNER):
         args[keyword] = int(args[keyword])
     args[SCALE] = float(args[SCALE])
@@ -142,7 +144,7 @@ async def on_message(message):
         try:
             args = parse_args(message.content[4:])  # remove leading '!grg'
         except Exception as e:
-            await message.channel.send('I could not parse the arguments. Please check.')
+            await message.channel.send(str(e))
             print(e, traceback.format_exc())
             return
         try:
