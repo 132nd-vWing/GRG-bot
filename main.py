@@ -95,7 +95,7 @@ def create_texfile(args, path, filename):
                 xstart = int(h * args[NX]) + 1
                 ystart = int(v * args[NY]) + 1
                 fd.write(r'\begin{myenv}\pagecolor{white}\grg')
-                scale = str(round(args[SCALE] / (args[NX] * args[H_PAGES]), 2))
+                scale = str(round(args[SCALE] / (args[NX] * args[H_PAGES]), 5))
                 fd.write(
                     '[title={{{}}},keypad={},north={},ltrim={},rtrim={},ttrim={},btrim={},\
                     xstart={},ystart={},nx={},ny={}, width={}, scalex={}, \

@@ -1,6 +1,4 @@
 %! Suppress = NonMatchingIf
-%! Suppress = NonMatchingIf
-%! Suppress = NonMatchingIf
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{grg}[2019/08/05 Gridded Reference Graphic]
 
@@ -185,18 +183,20 @@
           }%
         }%
       \node (scale) at ($ \grg@scaleXnode*(1,0) +\grg@scaleYnode*(0,1)$) {};%
-      \FPeval\grg@scalexMeter{round(\grg@scalex*\grg@meterPerMile:0)}
+      \FPeval\grg@scalexMeter{round(\grg@scalex*\grg@meterPerMile:0)}%
+      \FPeval\grg@scalexMile{round(\grg@scalex:2)}%
       \draw [Latex-Latex,thick]%
         ($(scale) + 0.2*\grg@ystep*(0,1) $) --%
         ($(scale) + 0.2*\grg@ystep*(0,1)  + \grg@xstep*(1,0)$)%
-        node[above,pos=0.65]{{\scriptsize\grg@scalex\,nm}}%
+        node[above,pos=0.65]{{\scriptsize\grg@scalexMile\,nm}}%
         node[below,pos=0.65]{{\scriptsize\grg@scalexMeter\,m}};%
-      \FPeval\grg@scaley{round(\grg@scalex*\theaspect:2)}
-      \FPeval\grg@scaleyMeter{round(\grg@scaley*\grg@meterPerMile:0)}
+      \FPeval\grg@scaley{\grg@scalex*\theaspect/\grg@ny*\grg@nx}%
+      \FPeval\grg@scaleyMile{round(\grg@scaley:2)}%
+      \FPeval\grg@scaleyMeter{round(\grg@scaley*\grg@meterPerMile:0)}%
       \draw [Latex-Latex,thick]%
         ($(scale) + 0.2*\grg@xstep*(1,0) $) --%
         ($(scale) + 0.2*\grg@xstep*(1,0)  + \grg@ystep*(0,1)$)%
-        node[above,pos=0.65,rotate=90]{{\scriptsize\grg@scaley\,nm}}%
+        node[above,pos=0.65,rotate=90]{{\scriptsize\grg@scaleyMile\,nm}}%
         node[below,pos=0.65,rotate=90]{{\scriptsize\grg@scaleyMeter\,m}};%
       }%
     \end{scope}%
