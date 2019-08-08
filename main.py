@@ -12,25 +12,31 @@ import config
 
 H_PAGES = 'h_pages'
 V_PAGES = 'v_pages'
-TITLE = 'title'
+JOIN = 'join'
 KEYPAD = 'keypad'
 NORTH = 'north'
 NX = 'nx'
 NY = 'ny'
-WIDTH = 'width'
-SCALE = 'scale'
 SCALE_CORNER = 'scalecorner'
-VALID_KEYWORDS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY, WIDTH, SCALE, SCALE_CORNER)
+SCALE = 'scale'
+TITLE = 'title'
+WIDTH = 'width'
+
+ARGUMENTS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY, WIDTH, SCALE, SCALE_CORNER)
+FLAGS = (JOIN, )
 
 client = discord.Client()
+# fallback to test without docker
+if not os.path.exists(config.BOTDIR):
+    config.BOTDIR = os.path.abspath('./')
 
 
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     print('We have logged in as {0.user}'.format(client))
 
 
-def parse_args(content):
+def parse_args(content: str) -> dict:
     """
     arguments must be comma separated
     understood keywords are defined in VALID_KEYWORDS
@@ -46,31 +52,38 @@ def parse_args(content):
         NORTH: 3,
         NX: 6,
         NY: 8,
-        WIDTH: '10.5cm',
+        WIDTH: 10.5,
         SCALE: 0.0,
         SCALE_CORNER: 0,
+        JOIN: False,
     }
     argv = content.split(',')
     if len(argv) == 1 and '=' not in argv[0]:
         return args
     for arg in argv:
-        keyword, val = arg.split('=')
-        keyword = keyword.strip().lower()
-        val.strip().lower()
-        if keyword in VALID_KEYWORDS:
-            args[keyword] = val
+        if '=' in arg:
+            keyword, val = arg.split('=')
+            keyword = keyword.strip().lower()
+            val = val.strip()
+            if keyword in ARGUMENTS:
+                args[keyword] = val
         else:
-            raise ValueError('I did not understand the keyword {}'.format(keyword))
+            arg = arg.strip().lower()
+            if arg in FLAGS:
+                args[arg] = True
+            else:
+                raise ValueError('I did not understand the option {}'.format(arg))
     for keyword in (H_PAGES, V_PAGES, KEYPAD, NORTH, NX, NY, SCALE_CORNER):
         args[keyword] = int(args[keyword])
-    args[SCALE] = float(args[SCALE])
+    for keyword in (SCALE, WIDTH):
+        args[keyword] = float(args[keyword])
     if (args[SCALE] > 0.01) and (args[SCALE_CORNER] == 0):
         args[SCALE_CORNER] = 2
     return args
 
 
-def create_texfile(args, path, filename):
-    with open(os.path.join(path, 'grg.tex'), 'w') as fd:
+def create_texfile(args: dict, path: str, filename: str, tex_name: str) -> None:
+    with open(os.path.join(path, tex_name), 'w') as fd:
         fd.write(
             r'''\documentclass[%
               convert={true,density=300},%
@@ -98,7 +111,7 @@ def create_texfile(args, path, filename):
                 scale = str(round(args[SCALE] / (args[NX] * args[H_PAGES]), 5))
                 fd.write(
                     '[title={{{}}},keypad={},north={},ltrim={},rtrim={},ttrim={},btrim={},\
-                    xstart={},ystart={},nx={},ny={}, width={}, scalex={}, \
+                    xstart={},ystart={},nx={},ny={}, width={}cm, scalex={}, \
                     scalecorner={}]{{{}}}'.format(
                         title, args[KEYPAD], args[NORTH], ltrim, rtrim, ttrim, btrim,
                         xstart, ystart, args[NX], args[NY], args[WIDTH],
@@ -110,7 +123,7 @@ def create_texfile(args, path, filename):
 
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message) -> None:
     try:
         if 'grg-bot' not in message.channel.name:
             return
@@ -152,40 +165,76 @@ async def on_message(message):
             await attachment.save(os.path.join(workdir + filename))
             os.chdir(workdir)
             os.symlink(os.path.join(config.BOTDIR, 'grg.sty'), 'grg.sty')
-            create_texfile(args, workdir, filename)
         except Exception as e:
-            await message.channel.send('I could not prepare the conversion. Pinging {}.'.format(os.environ['AUTHOR_ID']))
+            await message.channel.send('I could not create the workdir. Pinging {}.'.format(os.environ['AUTHOR_ID']))
             print(e, traceback.format_exc())
             return
-        with open(os.devnull, 'w') as FNULL:
+        # we first process it with the number of pages the user wanted
+        try:
+            tex_name = 'grg.tex'
+            create_texfile(args, workdir, filename, tex_name)
+            subprocess.call(
+                [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
+            )
+        except Exception as e:
+            await message.channel.send('I could not do the conversion. Pinging {}.'.format(os.environ['AUTHOR_ID']))
+            print(e, traceback.format_exc())
+            shutil.rmtree(workdir)
+            return
+        try:
+            files = glob.glob(workdir + 'grg*.png') + glob.glob(workdir + 'grg*.pdf')
+            files.sort()
+            subprocess.call(
+                [config.P7ZIP] + config.P7ZIP_ARGS + ['grg.7z'] + files
+            )
+            await message.channel.send(file=discord.File(workdir + 'grg.7z'))
+            for f in files:
+                os.remove(f)
+        except Exception as e:
+            await message.channel.send(
+                'I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID'])
+            )
+            print(e, traceback.format_exc())
+            shutil.rmtree(workdir)
+            return
+        # when the user also wants a single large GRG
+        if args[JOIN]:
+            tex_name = 'grg-single.tex'
+            args = args
+            args[NX] *= args[H_PAGES]
+            args[NY] *= args[V_PAGES]
+            args[WIDTH] = args[WIDTH] * args[H_PAGES]
+            args[H_PAGES] = 1
+            args[V_PAGES] = 1
             try:
-                print('Converting')
+                create_texfile(args, workdir, filename, tex_name)
                 subprocess.call(
-                    [config.LATEX, '-halt-on-error', '-shell-escape', 'grg.tex'],
-                    stdout=FNULL
+                    [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
                 )
             except Exception as e:
-                await message.channel.send('I could not process the image. Pinging {}.'.format(os.environ['AUTHOR_ID']))
+                await message.channel.send('I could not do the conversion. Pinging {}.'.format(os.environ['AUTHOR_ID']))
                 print(e, traceback.format_exc())
                 shutil.rmtree(workdir)
                 return
             try:
-                files = glob.glob(workdir + 'grg*.png') + [workdir + 'grg.pdf']
+                files = glob.glob(workdir + 'grg*.png') + [workdir + 'grg*.pdf']
                 files.sort()
                 subprocess.call(
-                    [config.P7ZIP, 'a', '-tzip', 'grg.zip'] + files,
-                    stdout=FNULL
+                    [config.P7ZIP] + config.P7ZIP_ARGS + ['grg-single.7z'] + files
                 )
-                await message.channel.send(file=discord.File(workdir + 'grg.zip'))
+                await message.channel.send(file=discord.File(workdir + 'grg-single.7z'))
             except Exception as e:
-                await message.channel.send('I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID']))
+                await message.channel.send(
+                    'I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID'])
+                )
                 print(e, traceback.format_exc())
-                return
-            finally:
                 shutil.rmtree(workdir)
+                return
+        shutil.rmtree(workdir)
 
     if len(message.attachments) == 0:
         await message.channel.send('Yes?')
         return
+
 
 client.run(os.environ['TOKEN'])
