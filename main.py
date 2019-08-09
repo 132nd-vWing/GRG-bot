@@ -9,6 +9,7 @@ import tempfile
 import traceback
 
 import config
+from help import help_message
 
 H_PAGES = 'h_pages'
 V_PAGES = 'v_pages'
@@ -137,11 +138,7 @@ async def on_message(message: discord.Message) -> None:
         return
 
     if 'help' in message.content.lower():
-        reply = 'Upload an image, and put "!grg" in the message.\n'
-        reply += 'I understand the following keywords: h_pages, v_pages, title, keypad, north, nx, ny, width.\n'
-        reply += 'Each keyword must be followed by "=" and the value. Multiple keywords must be separated by comma.\n'
-        reply += 'Example: !grg title = AO Charlie, h_pages = 2, ny=10'
-        await message.channel.send(reply)
+        await message.channel.send(help_message)
         return
 
     for attachment in message.attachments:
@@ -233,8 +230,7 @@ async def on_message(message: discord.Message) -> None:
         shutil.rmtree(workdir)
 
     if len(message.attachments) == 0:
-        await message.channel.send('Yes?')
-        return
+        await message.channel.send('At your service. If you need help, try `!grg help`.')
 
 
 client.run(os.environ['TOKEN'])
