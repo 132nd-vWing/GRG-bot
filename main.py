@@ -133,6 +133,15 @@ async def on_message(message: discord.Message) -> None:
         await message.channel.send(help.help_message)
         return
 
+    if 'version' in message.content.lower():
+        try:
+            with open('version.txt') as fd:
+                await message.channel.send(fd.read())
+        except FileNotFoundError:
+            await message.channel.send('Could not determine version.')
+        finally:
+            return
+
     for attachment in message.attachments:
         print('Received {} from {}'.format(attachment.filename, message.author))
         filename = attachment.filename
