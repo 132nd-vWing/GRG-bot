@@ -1,5 +1,5 @@
 help_message = """
-Upload an image, and put "!grg" in the message.
+Upload an image, and put `!grg` at the beginning of the message.
 I understand the following arguments: `h_pages, v_pages, title, keypad, north, nx, ny, width, scale`.
 Each keyword must be followed by "=" and the value. Multiple keywords must be separated by comma.
 Also, I understand the following falgs: `join`.
