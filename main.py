@@ -8,23 +8,9 @@ import subprocess
 import tempfile
 import traceback
 
+import arg
 import config
-from help import help_message
-
-H_PAGES = 'h_pages'
-V_PAGES = 'v_pages'
-JOIN = 'join'
-KEYPAD = 'keypad'
-NORTH = 'north'
-NX = 'nx'
-NY = 'ny'
-SCALE_CORNER = 'scalecorner'
-SCALE = 'scale'
-TITLE = 'title'
-WIDTH = 'width'
-
-ARGUMENTS = (H_PAGES, V_PAGES, TITLE, KEYPAD, NORTH, NX, NY, WIDTH, SCALE, SCALE_CORNER)
-FLAGS = (JOIN, )
+import help
 
 client = discord.Client()
 # fallback to test without docker
@@ -37,49 +23,55 @@ async def on_ready() -> None:
     print('We have logged in as {0.user}'.format(client))
 
 
+def get_default_args() -> dict:
+    args = {
+        arg.H_PAGES: 1,
+        arg.V_PAGES: 1,
+        arg.TITLE: '',
+        arg.KEYPAD: 1,
+        arg.NORTH: 3,
+        arg.NX: 6,
+        arg.NY: 8,
+        arg.WIDTH: 10.5,
+        arg.SCALE: 0.0,
+        arg.SCALE_CORNER: 0,
+        arg.JOIN: False,
+    }
+    return args
+
+
 def parse_args(content: str) -> dict:
     """
     arguments must be comma separated
-    understood keywords are defined in VALID_KEYWORDS
-
-    :param content:
+    understood keywords are defined in ARGUMENTS and FLAGS
+    :param content: string of arguments from the discord message
     :return: dict of arguments
     """
-    args = {
-        H_PAGES: 1,
-        V_PAGES: 1,
-        TITLE: '',
-        KEYPAD: 1,
-        NORTH: 3,
-        NX: 6,
-        NY: 8,
-        WIDTH: 10.5,
-        SCALE: 0.0,
-        SCALE_CORNER: 0,
-        JOIN: False,
-    }
+    args = get_default_args()
     argv = content.split(',')
-    if len(argv) == 1 and '=' not in argv[0]:
+    if len(argv) == 1 and len(argv[0].strip()) == 0:
         return args
-    for arg in argv:
-        if '=' in arg:
-            keyword, val = arg.split('=')
+    for one_arg in argv:
+        if '=' in one_arg:
+            keyword, val = one_arg.split('=')
             keyword = keyword.strip().lower()
             val = val.strip()
-            if keyword in ARGUMENTS:
+            if keyword in arg.ARGUMENTS:
                 args[keyword] = val
-        else:
-            arg = arg.strip().lower()
-            if arg in FLAGS:
-                args[arg] = True
             else:
-                raise ValueError('I did not understand the option {}'.format(arg))
-    for keyword in (H_PAGES, V_PAGES, KEYPAD, NORTH, NX, NY, SCALE_CORNER):
+                raise ValueError('I did not understand the argument {}'.format(one_arg))
+        else:
+            one_arg = one_arg.strip().lower()
+            if one_arg in arg.FLAGS:
+                args[one_arg] = True
+            else:
+                raise ValueError('I did not understand the flag {}'.format(one_arg))
+    for keyword in (arg.H_PAGES, arg.V_PAGES, arg.KEYPAD, arg.NORTH, arg.NX, arg.NY, arg.SCALE_CORNER):
         args[keyword] = int(args[keyword])
-    for keyword in (SCALE, WIDTH):
+    for keyword in (arg.SCALE, arg.WIDTH):
         args[keyword] = float(args[keyword])
-    if (args[SCALE] > 0.01) and (args[SCALE_CORNER] == 0):
-        args[SCALE_CORNER] = 2
+    if (args[arg.SCALE] > 0.01) and (args[arg.SCALE_CORNER] == 0):
+        args[arg.SCALE_CORNER] = 2
     return args
 
 
@@ -94,29 +86,29 @@ def create_texfile(args: dict, path: str, filename: str, tex_name: str) -> None:
             \usepackage{grg}%
             \begin{document}%
             ''')
-        number_pages = args[H_PAGES] * args[V_PAGES]
+        number_pages = args[arg.H_PAGES] * args[arg.V_PAGES]
         page = 1
-        for v in range(args[V_PAGES]):
-            for h in range(args[H_PAGES]):
+        for v in range(args[arg.V_PAGES]):
+            for h in range(args[arg.H_PAGES]):
                 if number_pages > 1:
-                    title = '{} {}/{}'.format(args[TITLE], page, number_pages)
+                    title = '{} {}/{}'.format(args[arg.TITLE], page, number_pages)
                 else:
-                    title = args[TITLE]
-                ltrim = h / args[H_PAGES]
-                rtrim = (1 - (h+1) / args[H_PAGES])
-                btrim = v / args[V_PAGES]
-                ttrim = (1 - (v+1) / args[V_PAGES])
-                xstart = int(h * args[NX]) + 1
-                ystart = int(v * args[NY]) + 1
+                    title = args[arg.TITLE]
+                ltrim = h / args[arg.H_PAGES]
+                rtrim = (1 - (h+1) / args[arg.H_PAGES])
+                btrim = v / args[arg.V_PAGES]
+                ttrim = (1 - (v+1) / args[arg.V_PAGES])
+                xstart = int(h * args[arg.NX]) + 1
+                ystart = int(v * args[arg.NY]) + 1
                 fd.write(r'\begin{myenv}\pagecolor{white}\grg')
-                scale = str(round(args[SCALE] / (args[NX] * args[H_PAGES]), 5))
+                scale = str(round(args[arg.SCALE] / (args[arg.NX] * args[arg.H_PAGES]), 5))
                 fd.write(
                     '[title={{{}}},keypad={},north={},ltrim={},rtrim={},ttrim={},btrim={},\
                     xstart={},ystart={},nx={},ny={}, width={}cm, scalex={}, \
                     scalecorner={}]{{{}}}'.format(
-                        title, args[KEYPAD], args[NORTH], ltrim, rtrim, ttrim, btrim,
-                        xstart, ystart, args[NX], args[NY], args[WIDTH],
-                        scale, args[SCALE_CORNER], filename)
+                        title, args[arg.KEYPAD], args[arg.NORTH], ltrim, rtrim, ttrim, btrim,
+                        xstart, ystart, args[arg.NX], args[arg.NY], args[arg.WIDTH],
+                        scale, args[arg.SCALE_CORNER], filename)
                 )
                 fd.write(r'\end{myenv}%' + '\n')
                 page += 1
@@ -138,7 +130,7 @@ async def on_message(message: discord.Message) -> None:
         return
 
     if 'help' in message.content.lower():
-        await message.channel.send(help_message)
+        await message.channel.send(help.help_message)
         return
 
     for attachment in message.attachments:
@@ -195,14 +187,14 @@ async def on_message(message: discord.Message) -> None:
             shutil.rmtree(workdir)
             return
         # when the user also wants a single large GRG
-        if args[JOIN]:
+        if args[arg.JOIN]:
             tex_name = 'grg-single.tex'
             args = args
-            args[NX] *= args[H_PAGES]
-            args[NY] *= args[V_PAGES]
-            args[WIDTH] = args[WIDTH] * args[H_PAGES]
-            args[H_PAGES] = 1
-            args[V_PAGES] = 1
+            args[arg.NX] *= args[arg.H_PAGES]
+            args[arg.NY] *= args[arg.V_PAGES]
+            args[arg.WIDTH] = args[arg.WIDTH] * args[arg.H_PAGES]
+            args[arg.H_PAGES] = 1
+            args[arg.V_PAGES] = 1
             try:
                 create_texfile(args, workdir, filename, tex_name)
                 subprocess.call(
@@ -233,4 +225,5 @@ async def on_message(message: discord.Message) -> None:
         await message.channel.send('At your service. If you need help, try `!grg help`.')
 
 
-client.run(os.environ['TOKEN'])
+if __name__ == '__main__':
+    client.run(os.environ['TOKEN'])
