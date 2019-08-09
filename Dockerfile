@@ -41,13 +41,13 @@ ENV PATH="/usr/local/texlive/2019/bin/x86_64-linuxmusl:${PATH}"
 
 FROM final AS tester
 WORKDIR /tmp
-ADD --chown=nobody:nobody grg.sty grg-test.tex map.png /tmp/
+ADD --chown=nobody:nobody grg.sty grg-test.tex QESHM_airfield.png /tmp/
 RUN /usr/bin/python3 -c 'import discord' && convert -version && gs -v && \
     pdflatex -halt-on-error -shell-escape grg-test.tex && rm -rf /tmp/*
 
 FROM final
 WORKDIR /app
-ADD --chown=nobody:nobody main.py grg.sty config.py /app/
+ADD --chown=nobody:nobody main.py help.py grg.sty config.py /app/
 USER nobody
 
 CMD ["python3", "main.py"]
