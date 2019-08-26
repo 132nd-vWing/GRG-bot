@@ -185,7 +185,7 @@ async def on_message(message: discord.Message) -> None:
             return
         # we first process it with the number of pages the user wanted
         try:
-            tex_name = 'grg.tex'
+            tex_name = basename + '-grg.tex'
             create_texfile(args, workdir, filename, tex_name)
             subprocess.call(
                 [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
@@ -196,12 +196,13 @@ async def on_message(message: discord.Message) -> None:
             shutil.rmtree(workdir)
             return
         try:
-            files = glob.glob(workdir + 'grg*.png') + glob.glob(workdir + 'grg*.pdf')
+            files = glob.glob(os.path.join(workdir, '*-grg*.png')) + glob.glob(os.path.join(workdir, '*-grg*.pdf'))
             files.sort()
+            result_file = basename + '-grg-multi.7z'
             subprocess.call(
-                [config.P7ZIP] + config.P7ZIP_ARGS + ['grg.7z'] + files
+                [config.P7ZIP] + config.P7ZIP_ARGS + [result_file] + files
             )
-            await message.channel.send(file=discord.File(workdir + 'grg.7z'))
+            await message.channel.send(file=discord.File(os.path.join(workdir, result_file)))
             for f in files:
                 os.remove(f)
         except Exception as e:
@@ -213,7 +214,7 @@ async def on_message(message: discord.Message) -> None:
             return
         # when the user also wants a single large GRG
         if args[arg.JOIN]:
-            tex_name = 'grg-single.tex'
+            tex_name = basename + '-grg-single.tex'
             args = args
             args[arg.NX] *= args[arg.H_PAGES]
             args[arg.NY] *= args[arg.V_PAGES]
@@ -231,12 +232,14 @@ async def on_message(message: discord.Message) -> None:
                 shutil.rmtree(workdir)
                 return
             try:
-                files = glob.glob(workdir + 'grg*.png') + [workdir + 'grg*.pdf']
+                files = glob.glob(os.path.join(workdir, '*-grg-single.png')) +\
+                        glob.glob(os.path.join(workdir, '*-grg-single.pdf'))
                 files.sort()
+                result_file = basename + '-grg-single.7z'
                 subprocess.call(
-                    [config.P7ZIP] + config.P7ZIP_ARGS + ['grg-single.7z'] + files
+                    [config.P7ZIP] + config.P7ZIP_ARGS + [result_file] + files
                 )
-                await message.channel.send(file=discord.File(workdir + 'grg-single.7z'))
+                await message.channel.send(file=discord.File(os.path.join(workdir, result_file)))
             except Exception as e:
                 await message.channel.send(
                     'I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID'])
