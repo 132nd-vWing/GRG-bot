@@ -21,7 +21,7 @@ Gridded Reference Graphics (GRG) bot
 
 Installation
 ------------
-Build the docker image using `build.sh`, insert the bot's token and your own user-ID into `environment` and run it using `run.sh`.
+Insert the bot's token and your own user-ID into `environment` and run `deploy.sh`
 
 Usage
 -----

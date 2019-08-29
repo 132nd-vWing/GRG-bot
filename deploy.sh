@@ -18,10 +18,7 @@
 
 set -e
 
-rm -rf build
-mkdir -p build
-cd build
-ln ../{Dockerfile,main.py,config.py,exceptions.py,help.py,grg-test.tex,grg.sty,arg.py,texlive.profile,doc/QESHM_airfield.png} .
-echo commit: $(git rev-parse --short HEAD) > version.txt
-git log | head -n3 | tail -n1 >> version.txt
-sudo docker build -t grg-bot .
+echo commit: $(git rev-parse --short HEAD) > app/version.txt
+git log | head -n3 | tail -n1 >> app/version.txt
+echo "build:  $(LANG=en_US date '+%c %z')" >> app/version.txt
+sudo docker-compose up -d --build

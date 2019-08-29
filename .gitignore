@@ -1,4 +1,5 @@
 build/
-__pycache__
 venv
+version.txt
 .idea
+__pycache__
