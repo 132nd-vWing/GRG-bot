@@ -132,6 +132,51 @@ def create_texfile(args: dict, path: str, filename: str, tex_name: str) -> None:
         fd.write(r'\end{document}')
 
 
+def create_grg(basename: str, filename: str, workdir: str, args: dict, is_joined: bool) -> (str, str):
+    try:
+        if is_joined:
+            tex_name = basename + '-grg-single.tex'
+        else:
+            tex_name = basename + '-grg.tex'
+        create_texfile(args, workdir, filename, tex_name)
+        subprocess.call(
+            [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
+        )
+    except Exception as e:
+        print(e, traceback.format_exc())
+        shutil.rmtree(workdir)
+        return 'I could not do the conversion. Pinging {}.'.format(os.environ['AUTHOR_ID']), ''
+    try:
+        if is_joined:
+            end = '*-grg-single'
+        else:
+            end = '*-grg*'
+        files = glob.glob(os.path.join(workdir, end + '.png')) +\
+                glob.glob(os.path.join(workdir, end + '.pdf'))
+        files.sort()
+        print(files)
+        if is_joined:
+            result_file = basename + '-grg-single.7z'
+        else:
+            result_file = basename + '-grg-multi.7z'
+        subprocess.call(
+            [config.P7ZIP] + config.P7ZIP_ARGS + [result_file] + files
+        )
+        result_file = os.path.join(workdir, result_file)
+        if os.stat(result_file).st_size > 8 * 1024 ** 2:
+            raise FileTooLargeError
+    except FileTooLargeError as e:
+        print(e, traceback.format_exc())
+        shutil.rmtree(workdir)
+        return 'The file size of the output archive is above 8 MB. Lower the resolution of the ' \
+               'input file and try again.', ''
+    except Exception as e:
+        print(e, traceback.format_exc())
+        shutil.rmtree(workdir)
+        return 'I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID']), ''
+    return '', result_file
+
+
 @client.event
 async def on_message(message: discord.Message) -> None:
     try:
@@ -186,96 +231,27 @@ async def on_message(message: discord.Message) -> None:
             return
         # we first process it with the number of pages the user wanted
         try:
-            tex_name = basename + '-grg.tex'
-            create_texfile(args, workdir, filename, tex_name)
-            subprocess.call(
-                [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
-            )
-        except Exception as e:
-            await message.channel.send('I could not do the conversion. Pinging {}.'.format(os.environ['AUTHOR_ID']))
-            print(e, traceback.format_exc())
-            shutil.rmtree(workdir)
-            return
-        try:
-            files = glob.glob(os.path.join(workdir, '*-grg*.png')) + glob.glob(os.path.join(workdir, '*-grg*.pdf'))
-            files.sort()
-            result_file = basename + '-grg-multi.7z'
-            subprocess.call(
-                [config.P7ZIP] + config.P7ZIP_ARGS + [result_file] + files
-            )
-            result_file = os.path.join(workdir, result_file)
-            if os.stat(result_file).st_size > 8 * 1024**2:
-                raise FileTooLargeError
-            await message.channel.send(file=discord.File(result_file))
-            for f in files:
-                os.remove(f)
-        except FileTooLargeError as e:
-            await message.channel.send(
-                'The file size of the output archive is above 8 MB. Lower the resolution of the '
-                'input file and try again.'
-            )
-            print(e, traceback.format_exc())
-            shutil.rmtree(workdir)
-            return
-        except Exception as e:
-            await message.channel.send(
-                'I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID'])
-            )
-            print(e, traceback.format_exc())
-            shutil.rmtree(workdir)
+            output_message, result_file  = create_grg(basename, filename, workdir, args, False)
+            if len(output_message) > 0:  # error message
+                await message.channel.send(output_message)
+            else:
+                await message.channel.send(file=discord.File(result_file))
+        except:
             return
         # when the user also wants a single large GRG
         if args[arg.JOIN]:
-            tex_name = basename + '-grg-single.tex'
-            args = args
             args[arg.NX] *= args[arg.H_PAGES]
             args[arg.NY] *= args[arg.V_PAGES]
             args[arg.WIDTH] = args[arg.WIDTH] * args[arg.H_PAGES]
             args[arg.H_PAGES] = 1
             args[arg.V_PAGES] = 1
             try:
-                create_texfile(args, workdir, filename, tex_name)
-                subprocess.call(
-                    [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
-                )
-            except Exception as e:
-                await message.channel.send('I could not do the conversion. Pinging {}.'.format(os.environ['AUTHOR_ID']))
-                print(e, traceback.format_exc())
-                shutil.rmtree(workdir)
-                return
-            try:
-                files = glob.glob(os.path.join(workdir, '*-grg-single.png')) +\
-                        glob.glob(os.path.join(workdir, '*-grg-single.pdf'))
-                files.sort()
-                result_file = basename + '-grg-single.7z'
-                subprocess.call(
-                    [config.P7ZIP] + config.P7ZIP_ARGS + [result_file] + files
-                )
-                result_file = os.path.join(workdir, result_file)
-                if os.stat(result_file).st_size > 8 * 1024 ** 2:
-                    raise FileTooLargeError
-                await message.channel.send(file=discord.File(os.path.join(workdir, result_file)))
-            except FileTooLargeError as e:
-                await message.channel.send(
-                    'The file size of the output archive is above 8 MB. Lower the resolution of the '
-                    'input file and try again.'
-                )
-                print(e, traceback.format_exc())
-                shutil.rmtree(workdir)
-                return
-            except discord.errors.HTTPException as e:
-                await message.channel.send(
-                    'The file size of the output archive is above 8 MB. Lower the resolution of the '
-                    'input file and try again.'
-                )
-                shutil.rmtree(workdir)
-                return
-            except Exception as e:
-                await message.channel.send(
-                    'I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID'])
-                )
-                print(e, traceback.format_exc())
-                shutil.rmtree(workdir)
+                output_message, result_file = create_grg(basename, filename, workdir, args, True)
+                if len(output_message) > 0:  # error message
+                    await message.channel.send(output_message)
+                else:
+                    await message.channel.send(file=discord.File(result_file))
+            except:
                 return
         shutil.rmtree(workdir)
 
