@@ -1,0 +1,2 @@
+class FileTooLargeError(Exception):
+    pass
