@@ -27,6 +27,7 @@ import traceback
 import arg
 import config
 import help
+from exceptions import FileTooLargeError
 
 client = discord.Client()
 # fallback to test without docker
@@ -202,9 +203,20 @@ async def on_message(message: discord.Message) -> None:
             subprocess.call(
                 [config.P7ZIP] + config.P7ZIP_ARGS + [result_file] + files
             )
-            await message.channel.send(file=discord.File(os.path.join(workdir, result_file)))
+            result_file = os.path.join(workdir, result_file)
+            if os.stat(result_file).st_size > 8 * 1024**2:
+                raise FileTooLargeError
+            await message.channel.send(file=discord.File(result_file))
             for f in files:
                 os.remove(f)
+        except FileTooLargeError as e:
+            await message.channel.send(
+                'The file size of the output archive is above 8 MB. Lower the resolution of the '
+                'input file and try again.'
+            )
+            print(e, traceback.format_exc())
+            shutil.rmtree(workdir)
+            return
         except Exception as e:
             await message.channel.send(
                 'I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID'])
@@ -239,7 +251,25 @@ async def on_message(message: discord.Message) -> None:
                 subprocess.call(
                     [config.P7ZIP] + config.P7ZIP_ARGS + [result_file] + files
                 )
+                result_file = os.path.join(workdir, result_file)
+                if os.stat(result_file).st_size > 8 * 1024 ** 2:
+                    raise FileTooLargeError
                 await message.channel.send(file=discord.File(os.path.join(workdir, result_file)))
+            except FileTooLargeError as e:
+                await message.channel.send(
+                    'The file size of the output archive is above 8 MB. Lower the resolution of the '
+                    'input file and try again.'
+                )
+                print(e, traceback.format_exc())
+                shutil.rmtree(workdir)
+                return
+            except discord.errors.HTTPException as e:
+                await message.channel.send(
+                    'The file size of the output archive is above 8 MB. Lower the resolution of the '
+                    'input file and try again.'
+                )
+                shutil.rmtree(workdir)
+                return
             except Exception as e:
                 await message.channel.send(
                     'I could not zip and send the files. Pinging {}.'.format(os.environ['AUTHOR_ID'])
