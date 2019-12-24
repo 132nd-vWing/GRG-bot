@@ -21,4 +21,5 @@ set -e
 echo commit: $(git rev-parse --short HEAD) > app/version.txt
 git log | head -n3 | tail -n1 >> app/version.txt
 echo "build:  $(LANG=en_US date '+%a %b %d %H:%M:%S %Y %z')" >> app/version.txt
-sudo docker-compose up -d --build
+sudo docker-compose build --no-cache
+sudo docker-compose up -d 

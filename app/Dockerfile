@@ -25,29 +25,36 @@ RUN apt update && apt install -y perl wget fontconfig && apt clean && \
     tar -xf install-tl-unx.tar.gz && \
     cd install-tl-2019* && ./install-tl -repository ctan -profile ../texlive.profile && rm -rf /tmp/*  
 RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr --repository ctan install \
-    latex-bin \
-    pdftex \
-    latex \
-    standalone \
-    xkeyval \
-    fp \
     adjustbox \
-    pgf \
     collectbox \
-    xcolor \
-    tex-gyre \
-    oberdiek \
-    ifluatex \
+    epstopdf-pkg \
+    fp \
     graphics \
-    graphics-def && \
+    graphics-def \
+    kvsetkeys \
+    latex \
+    latex-bin \
+    ltxcmds \
+    oberdiek \
+    pdftex \
+    pgf \
+    standalone \
+    tex-gyre \
+    xcolor \
+    xkeyval \
+    && \
 # we needed the glibc version only for bootstrapping
     rm -rf /usr/local/texlive/2019/bin/x86_64-linux
 
 FROM alpine:latest AS final
 
 COPY --from=builder /usr/local/texlive/ /usr/local/texlive
-RUN apk add --no-cache \
+RUN apk update && \
+    apk add --no-cache \
+    gcc \
+    musl-dev \
     python3 \
+    python3-dev \
     imagemagick \
     ghostscript \
     p7zip \
