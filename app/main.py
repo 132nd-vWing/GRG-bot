@@ -204,6 +204,15 @@ async def on_message(message: discord.Message) -> None:
         finally:
             return
 
+    if 'uptime' in message.content.lower():
+        try:
+            with open('/tmp/process_timestamp.txt') as fd:
+                await message.channel.send('```' + fd.read() + '```')
+        except FileNotFoundError:
+            await message.channel.send('Could not determine uptime.')
+        finally:
+            return
+
     for attachment in message.attachments:
         print('Received {} from {}'.format(attachment.filename, message.author))
         filename = attachment.filename
@@ -260,4 +269,6 @@ async def on_message(message: discord.Message) -> None:
 
 
 if __name__ == '__main__':
+    with open('/tmp/process_timestamp.txt', 'w') as fd:
+        subprocess.call(['date'], stdout=fd)
     client.run(os.environ['TOKEN'])
