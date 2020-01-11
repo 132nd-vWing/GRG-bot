@@ -29,6 +29,8 @@ In the #grg-bot discord channel, upload an image, and put `!grg` at the beginnin
 
 All GRGs are returned both as PNG (for your DCS kneeboard) and as PDF (for printing or use on a second monitor/device).
 
+DCS uses an aspect ratio of 3:4 for kneeboards. For best results, use the same ratio for your inputs and/or outputs.
+
 The options are:
 
 * `h_pages=1|2|...`: How many horizontal GRG pages you want to split your map into. If you provide a value greater than 1, all pages will be enumerated in the title bar. Default: 1
