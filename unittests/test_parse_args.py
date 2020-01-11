@@ -35,6 +35,11 @@ class TestParseArgs(TestCase):
         self.assertTrue(parse_args('scale=0.20') == parse_args('scale = 0.20'))
         self.assertTrue(parse_args('scale=0.20') == parse_args('scale  =   0.20'))
 
+    def test_additional_comma(self):
+        self.assertTrue(parse_args(', h_pages=1') == get_default_args())
+        self.assertTrue(parse_args(',, h_pages=1,') == get_default_args())
+        self.assertTrue(parse_args(',, h_pages=1, v_pages=1, ') == get_default_args())
+
     def test_all_arguments(self):
         args1 = {
             arg.H_PAGES: 3,
