@@ -91,6 +91,10 @@ def parse_args(content: str) -> dict:
         args[keyword] = float(args[keyword])
     if (args[arg.SCALE] > 0.01) and (args[arg.SCALE_CORNER] == 0):
         args[arg.SCALE_CORNER] = 2
+    if not 0 < args[arg.H_PAGES] < 10:
+        raise ValueError('Value for h_pages is not an integer between 0 and 10')
+    if not 0 < args[arg.V_PAGES] < 10:
+        raise ValueError('Value for v_pages is not an integer between 0 and 10')
     return args
 
 

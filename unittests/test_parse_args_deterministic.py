@@ -60,3 +60,15 @@ class TestParseArgsDeterministic(TestCase):
             'scalecorner=1, join, width = 9.0, keypad=2'
         )
         self.assertEqual(args1, args2)
+
+    def test_sensible_ranges(self):
+        for c in ['v', 'h']:
+            parse_args(c+'_pages=1')
+            parse_args(c+'_pages=2')
+            parse_args(c+'_pages=9')
+            with self.assertRaises(ValueError):
+                parse_args(c+'_pages=-1')
+            with self.assertRaises(ValueError):
+                parse_args(c+'_pages=0')
+            with self.assertRaises(ValueError):
+                parse_args(c+'_pages=10')
