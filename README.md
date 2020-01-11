@@ -25,7 +25,7 @@ Insert the bot's token and your own user-ID into `environment` and run `deploy.s
 
 Usage
 -----
-In the #grg-bot discord channel, upload an image, and put `!grg` at the beginning of the caption message. The bot will then convert the image into a GRG according to your specifications, and return all files in a `.7z`-archive. You can pass further options, like `!grg title=AO SIERRA, h_pages=2`. Multiple options must be separated by a comma.
+In the `#grg-bot` discord channel, upload an image, and put `!grg` at the beginning of the caption message. The bot will then convert the image into a GRG according to your specifications, and return all files in a `.7z`-archive. You can pass further options, like `!grg title=AO SIERRA, h_pages=2`. Multiple options must be separated by a comma.
 
 All GRGs are returned both as PNG (for your DCS kneeboard) and as PDF (for printing or use on a second monitor/device).
 
