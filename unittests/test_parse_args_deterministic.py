@@ -4,7 +4,7 @@ from main import parse_args, get_default_args
 import arg
 
 
-class TestParseArgs(TestCase):
+class TestParseArgsDeterministic(TestCase):
     def test_empty(self):
         self.assertEqual(parse_args(''), get_default_args())
         self.assertEqual(parse_args('  '), get_default_args())
