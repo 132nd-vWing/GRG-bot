@@ -188,14 +188,15 @@ async def on_message(message: discord.Message) -> None:
     if message.author == client.user:
         return
 
-    if not message.content.startswith('!grg'):
+    content = message.content.lower()
+    if not content.startswith('!grg'):
         return
 
-    if 'help' in message.content.lower():
+    if 'help' in content:
         await message.channel.send(help.help_message)
         return
 
-    if 'version' in message.content.lower():
+    if 'version' in content:
         try:
             with open('version.txt') as fd:
                 await message.channel.send('```' + fd.read() + '```')
@@ -204,7 +205,7 @@ async def on_message(message: discord.Message) -> None:
         finally:
             return
 
-    if 'uptime' in message.content.lower():
+    if 'uptime' in content:
         try:
             with open('/tmp/process_timestamp.txt') as fd:
                 await message.channel.send('```' + fd.read() + '```')
@@ -224,7 +225,7 @@ async def on_message(message: discord.Message) -> None:
             await message.channel.send('I cannot handle {} files.'.format(filetype))
             return
         try:
-            args = parse_args(message.content[4:])  # remove leading '!grg'
+            args = parse_args(content[4:])  # remove leading '!grg'
         except Exception as e:
             await message.channel.send(str(e))
             print(e, traceback.format_exc())
