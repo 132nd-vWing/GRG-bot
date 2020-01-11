@@ -23,7 +23,7 @@ ADD texlive.profile /tmp/
 RUN apt update && apt install -y perl wget fontconfig && apt clean && \
     wget --quiet http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
     tar -xf install-tl-unx.tar.gz && \
-    cd install-tl-2019* && ./install-tl -repository ctan -profile ../texlive.profile && rm -rf /tmp/*  
+    cd install-tl-2020* && ./install-tl -repository ctan -profile ../texlive.profile && rm -rf /tmp/*
 RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr --repository ctan install \
     adjustbox \
     collectbox \
