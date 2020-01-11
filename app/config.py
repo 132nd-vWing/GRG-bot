@@ -1,5 +1,5 @@
 # GRG-bot: provide GRGs for maps via a discord bot
-# Copyright © 2019 132nd.Professor
+# Copyright © 2019, 2020 132nd.Professor
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
