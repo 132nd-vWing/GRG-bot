@@ -79,6 +79,8 @@ def parse_args(content: str) -> dict:
                 raise ValueError('I did not understand the argument {}'.format(one_arg))
         else:
             one_arg = one_arg.strip().lower()
+            if len(one_arg) == 0:
+                continue
             if one_arg in arg.FLAGS:
                 args[one_arg] = True
             else:
