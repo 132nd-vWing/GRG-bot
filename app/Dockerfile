@@ -24,7 +24,7 @@ RUN apt update && apt install -y perl wget fontconfig && apt clean && \
     wget --quiet http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
     tar -xf install-tl-unx.tar.gz && \
     cd install-tl-2020* && ./install-tl -repository ctan -profile ../texlive.profile && rm -rf /tmp/*
-RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr --repository ctan install \
+RUN /usr/local/texlive/2020/bin/x86_64-linux/tlmgr --repository ctan install \
     adjustbox \
     collectbox \
     epstopdf-pkg \
@@ -44,7 +44,7 @@ RUN /usr/local/texlive/2019/bin/x86_64-linux/tlmgr --repository ctan install \
     xkeyval \
     && \
 # we needed the glibc version only for bootstrapping
-    rm -rf /usr/local/texlive/2019/bin/x86_64-linux
+    rm -rf /usr/local/texlive/2020/bin/x86_64-linux
 
 FROM alpine:latest AS final
 
@@ -60,7 +60,7 @@ RUN apk update && \
     p7zip \
     && pip3 install discord \
     && rm -rf /root/.cache/pip
-ENV PATH="/usr/local/texlive/2019/bin/x86_64-linuxmusl:${PATH}"
+ENV PATH="/usr/local/texlive/2020/bin/x86_64-linuxmusl:${PATH}"
 
 FROM final AS tester
 WORKDIR /tmp
