@@ -14,7 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+IMAGE_SIZE = '900x1200'
 LATEX = 'pdflatex'
+CONVERT = 'convert'
+CONVERT_ARGS_PRE = [
+    "-density", "300",
+]
+CONVERT_ARGS_POST = [
+    "-filter", "box",
+    "-resize", IMAGE_SIZE,
+    "-gravity", "center",
+    "-extent", IMAGE_SIZE,
+    "-define", "png:compression-level=9",
+    "-define", "png:compression-filter=1",
+    "-define", "png:compression-strategy=0",
+    "-sharpen", "0x0.5",
+    "-depth", "8"
+]
 BOTDIR = '/app/'
 P7ZIP = '7z'
 P7ZIP_ARGS = ['a', '-t7z', '-m0=lzma2', '-mx=9', '-mfb=64', '-md=32m', '-ms=on']

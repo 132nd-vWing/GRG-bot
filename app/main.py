@@ -139,6 +139,14 @@ def create_texfile(args: dict, path: str, filename: str, tex_name: str) -> None:
 
 
 def create_grg(basename: str, filename: str, workdir: str, args: dict, is_joined: bool) -> (str, str):
+    """
+    :param basename: filename without '.[extension]'
+    :param filename: name of input image
+    :param workdir: temp directory for processing
+    :param args: parsed user-provided arguments
+    :param is_joined: whether to create a joined one-page GRG as well
+    :return: (status message, path to created 7z archive containing the GRGs)
+    """
     try:
         if is_joined:
             tex_name = basename + '-grg-single.tex'
@@ -147,6 +155,11 @@ def create_grg(basename: str, filename: str, workdir: str, args: dict, is_joined
         create_texfile(args, workdir, filename, tex_name)
         subprocess.call(
             [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
+        )
+        pdf_name = tex_name.replace('.tex', '.pdf')
+        png_name = tex_name.replace('.tex', '.png')
+        subprocess.call(
+            [config.CONVERT] + config.CONVERT_ARGS_PRE + [pdf_name] + config.CONVERT_ARGS_POST + [png_name]
         )
     except Exception as e:
         print(e, traceback.format_exc())
