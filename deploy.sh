@@ -21,5 +21,11 @@ set -e
 echo commit: $(git rev-parse --short HEAD) > app/version.txt
 git log | head -n3 | tail -n1 >> app/version.txt
 echo "build:  $(LANG=en_US date '+%a %b %d %H:%M:%S %Y %z')" >> app/version.txt
-sudo docker-compose build
-sudo docker-compose up -d 
+docker build -t grg-bot app
+
+set +e
+docker stop 132nd-grg-bot
+docker rm 132nd-grg-bot
+set -e
+
+docker run --env-file=environment --name=132nd-grg-bot --restart unless-stopped -d grg-bot:latest
