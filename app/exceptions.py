@@ -1,2 +1,0 @@
-class FileTooLargeError(Exception):
-    pass

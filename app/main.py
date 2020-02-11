@@ -27,12 +27,15 @@ import traceback
 import arg
 import config
 import help
-from exceptions import FileTooLargeError
 
 client = discord.Client()
 # fallback to test without docker
 if not os.path.exists(config.BOTDIR):
     config.BOTDIR = os.path.abspath('./')
+
+
+class FileTooLargeError(Exception):
+    pass
 
 
 @client.event
@@ -272,7 +275,7 @@ async def on_message(message: discord.Message) -> None:
             return
         # we first process it with the number of pages the user wanted
         try:
-            output_message, result_file  = create_grg(basename, filename, workdir, args, False)
+            output_message, result_file = create_grg(basename, filename, workdir, args, False)
             if len(output_message) > 0:  # error message
                 await message.channel.send(output_message)
             else:
