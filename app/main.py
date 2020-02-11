@@ -153,14 +153,25 @@ def create_grg(basename: str, filename: str, workdir: str, args: dict, is_joined
         else:
             tex_name = basename + '-grg.tex'
         create_texfile(args, workdir, filename, tex_name)
-        subprocess.call(
-            [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
-        )
+        # when the GRG gets joined, we want to have the PNG with the same aspect ratio as the PDF
+        # so we let latex do the job
+        if is_joined:
+            subprocess.call(
+                [config.LATEX, '-halt-on-error', '-shell-escape', tex_name]
+            )
+        # for single pages, we want them to fit in the kneeboard, so we use our custom conversion to enforce
+        # the aspect ratio
+        else:
+            subprocess.call(
+                [config.LATEX, '-halt-on-error', tex_name]
+            )
         pdf_name = tex_name.replace('.tex', '.pdf')
         png_name = tex_name.replace('.tex', '.png')
-        subprocess.call(
-            [config.CONVERT] + config.CONVERT_ARGS_PRE + [pdf_name] + config.CONVERT_ARGS_POST + [png_name]
-        )
+        # custom conversion is this one
+        if not is_joined:
+            subprocess.call(
+                [config.CONVERT] + config.CONVERT_ARGS_PRE + [pdf_name] + config.CONVERT_ARGS_POST + [png_name]
+            )
     except Exception as e:
         print(e, traceback.format_exc())
         shutil.rmtree(workdir)

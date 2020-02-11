@@ -33,8 +33,8 @@ Multiple options must be separated by a comma.
 All GRGs are returned both as PNG (for your DCS kneeboard) and as PDF (for printing or use on a second monitor/device).
 
 DCS uses an aspect ratio of 3:4 for kneeboards.
-For best results, use the same ratio for your inputs and/or outputs.
-The output ratio is currently not enforced by the bot (see issue #12).
+If the output ratio for individual pages (everything that is not `join`ed) does not match 3:4,
+it will get padded to match.
 
 The options are divided into keyword arguments and flags. 
 Keywords are:
