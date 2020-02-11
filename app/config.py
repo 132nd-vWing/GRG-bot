@@ -46,3 +46,5 @@ P7ZIP_ARGS = [
     '-md=32m',
     '-ms=on',
 ]
+
+OVERLAP_FACTOR = 0.00

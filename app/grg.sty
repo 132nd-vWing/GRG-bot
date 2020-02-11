@@ -62,6 +62,10 @@
 \define@key{grg}{ystart}{\def\grg@ystart{#1}}
 \define@key{grg}{scalex}{\def\grg@scalex{#1}}
 \define@key{grg}{scalecorner}{\def\grg@scalecorner{#1}}
+\define@key{grg}{originx}{\def\grg@originx{#1}}
+\define@key{grg}{originy}{\def\grg@originy{#1}}
+\define@key{grg}{finalx}{\def\grg@finalx{#1}}
+\define@key{grg}{finaly}{\def\grg@finaly{#1}}
 \define@choicekey*{grg}{keypad}{0,1,2,3,4}[1]{\def\grg@keypad{#1}}
 \define@choicekey*{grg}{north}{0,1,2,3,4}[1]{\def\grg@north{#1}}
 
@@ -80,6 +84,10 @@
   north=3,%
   scalex=0.0,%
   scalecorner=2,%
+  originx=0,%
+  originy=0,%
+  finalx=1,%
+  finaly=1,%
 }
 
 \newcommand\grg[2][]{%
@@ -118,29 +126,29 @@
 %
   \begin{tikzpicture}%
     \node[anchor=south west,inner sep=0] (image) at (0, 0) {\testaspect{\adjincludegraphics[width=\grg@width, trim={\grg@ltrim\width} {\grg@btrim\height} {\grg@rtrim\width} {\grg@ttrim\height},clip]{#2}}\global\let\theaspect\theaspect};%
-    \begin{scope}[x={(image.south east)},y={(image.north west)}]%
+    \begin{scope}[shift={($(\grg@originx*\grg@width,0)$)}, x={($(image.south east)+(0, 0)$)},y={($(image.north west)-(\grg@finalx*\grg@width,0)$)}]%
       % the addition of 0.1pt makes sure that the outmost lines are drawn (workaround)
       % major grid
       \draw[xstep=\grg@xstep,ystep=\grg@ystep] (0,0) grid ($(1,1) + (0.1pt,0.1pt)$);%
-      % x exterior grid
-      \draw[xstep=\grg@xstep,ystep=\bottomlabelheight] (0,0) grid ($(1,0) - (0,\bottomlabelheight) + (0.1pt,0)$);%
-      % y exterior grid
-      \draw[xstep=\leftlabelwidth,ystep=\grg@ystep] (0,0) grid ($(-\leftlabelwidth,1.00) + (-0.1pt,0.1pt)$);%
-      % x grid labels
-      \foreach \x in {1,...,\grg@nx} {%
-        \FPeval\grg@tmp{\x+\grg@xstart-1}
-        \setcounter{ccount}{\grg@tmp}%
-        \FPeval\grg@xgridlabelpos{(\x-0.5)/\grg@nx}%
-        \node [inner sep=0] at (\grg@xgridlabelpos, -0.5*\bottomlabelheight) {\Alph{ccount}};%
-      }%
-      % y grid labels
-      \foreach \y in {1,...,\grg@ny} {%
-        \FPeval\grg@tmp{round(\y+\grg@ystart-1:0)}
-        \FPeval\grg@ygridlabelpos{(\y-0.5)/\grg@ny}%
-        \node [inner sep=0] at (-0.5*\leftlabelwidth, \grg@ygridlabelpos) {\grg@tmp};%
-      }%
-      % title
-      \node [anchor=south] at (0.5,1) {\grg@title};%
+%      % x exterior grid
+%      \draw[xstep=\grg@xstep,ystep=\bottomlabelheight] (0,0) - (0,\bottomlabelheight) + (0.1pt,0)$);%
+%      % y exterior grid
+%      \draw[xstep=\leftlabelwidth,ystep=\grg@ystep] (0,0) grid ($(-\leftlabelwidth,1.00) + (-0.1pt,0.1pt)$);%
+%      % x grid labels
+%      \foreach \x in {1,...,\grg@nx} {%
+%        \FPeval\grg@tmp{\x+\grg@xstart-1}
+%        \setcounter{ccount}{\grg@tmp}%
+%        \FPeval\grg@xgridlabelpos{(\x-0.5)/\grg@nx}%
+%        \node [inner sep=0] at (\grg@xgridlabelpos, -0.5*\bottomlabelheight) {\Alph{ccount}};%
+%      }%
+%      % y grid labels
+%      \foreach \y in {1,...,\grg@ny} {%
+%        \FPeval\grg@tmp{round(\y+\grg@ystart-1:0)}
+%        \FPeval\grg@ygridlabelpos{(\y-0.5)/\grg@ny}%
+%        \node [inner sep=0] at (-0.5*\leftlabelwidth, \grg@ygridlabelpos) {\grg@tmp};%
+%      }%
+%      % title
+%      \node [anchor=south] at (0.5,1) {\grg@title};%
       % keypad template
       \ifthenelse{\grg@keypad=0}{}{%
         \draw[xstep=\grg@xkeypad,ystep=\grg@ykeypad] (\grg@keypadXstart,\grg@keypadYstart) grid (\grg@keypadXend,\grg@keypadYend);%

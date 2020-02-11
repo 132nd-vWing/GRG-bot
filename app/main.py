@@ -114,16 +114,37 @@ def create_texfile(args: dict, path: str, filename: str, tex_name: str) -> None:
             ''')
         number_pages = args[arg.H_PAGES] * args[arg.V_PAGES]
         page = 1
+        x_offset = 1 / args[arg.H_PAGES] * config.OVERLAP_FACTOR / 2  # overlap gets applied twice
+        y_offset = 1 / args[arg.V_PAGES] * config.OVERLAP_FACTOR / 2
         for v in range(args[arg.V_PAGES]):
             for h in range(args[arg.H_PAGES]):
                 if number_pages > 1:
                     title = '{} {}/{}'.format(args[arg.TITLE], page, number_pages)
                 else:
                     title = args[arg.TITLE]
+
                 ltrim = h / args[arg.H_PAGES]
+                origin_x = 0
+                if h > 0:
+                    origin_x = x_offset
+                    ltrim -= x_offset
                 rtrim = (1 - (h+1) / args[arg.H_PAGES])
+                final_x = 0
+                if h < args[arg.H_PAGES] - 1:
+                    final_x = x_offset
+                    rtrim -= x_offset
+
                 btrim = v / args[arg.V_PAGES]
+                origin_y = 0
+                if v > 0:
+                    origin_y = y_offset
+                    btrim -= y_offset
                 ttrim = (1 - (v+1) / args[arg.V_PAGES])
+                final_y = 0
+                if v < args[arg.V_PAGES] - 1:
+                    final_y = y_offset
+                    ttrim -= y_offset
+
                 xstart = int(h * args[arg.NX]) + 1
                 ystart = int(v * args[arg.NY]) + 1
                 fd.write(r'\begin{myenv}\pagecolor{white}\grg')
@@ -131,10 +152,11 @@ def create_texfile(args: dict, path: str, filename: str, tex_name: str) -> None:
                 fd.write(
                     '[title={{{}}},keypad={},north={},ltrim={},rtrim={},ttrim={},btrim={},\
                     xstart={},ystart={},nx={},ny={}, width={}cm, scalex={}, \
-                    scalecorner={}]{{{}}}'.format(
+                    scalecorner={}, originx={}, originy={}, \
+                    finalx={}, finaly={}]{{{}}}'.format(
                         title, args[arg.KEYPAD], args[arg.NORTH], ltrim, rtrim, ttrim, btrim,
                         xstart, ystart, args[arg.NX], args[arg.NY], args[arg.WIDTH],
-                        scale, args[arg.SCALE_CORNER], filename)
+                        scale, args[arg.SCALE_CORNER], origin_x, origin_y, final_x, final_y, filename)
                 )
                 fd.write(r'\end{myenv}%' + '\n')
                 page += 1
