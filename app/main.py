@@ -218,15 +218,16 @@ async def on_message(message: discord.Message) -> None:
     if message.author == client.user:
         return
 
-    content = message.content.lower()
-    if not content.startswith('!grg'):
+    content = message.content
+    content_lower = content.lower()
+    if not content_lower.startswith('!grg'):
         return
 
-    if 'help' in content:
+    if 'help' in content_lower:
         await message.channel.send(help.help_message)
         return
 
-    if 'version' in content:
+    if 'version' in content_lower:
         try:
             with open('version.txt') as fd:
                 await message.channel.send('```' + fd.read() + '```')
@@ -235,7 +236,7 @@ async def on_message(message: discord.Message) -> None:
         finally:
             return
 
-    if 'uptime' in content:
+    if 'uptime' in content_lower:
         try:
             with open('/tmp/process_timestamp.txt') as fd:
                 await message.channel.send('```' + fd.read() + '```')
