@@ -71,7 +71,7 @@ RUN /usr/bin/python3 -c 'import discord' && convert -version && gs -v && \
 FROM final
 WORKDIR /app
 USER nobody
-ADD --chown=nobody:nobody main.py arg.py exceptions.py help.py config.py grg.sty version.txt /app/
+ADD --chown=nobody:nobody main.py arg.py help.py config.py grg.sty version.txt /app/
 
 CMD ["python3", "main.py"]
 
