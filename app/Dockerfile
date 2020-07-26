@@ -16,7 +16,7 @@
 
 # bootstrap the musl-version of pdflatex on ubuntu, since the texlive installer doesn't run out-of-the-box on alpine
 # the final image runs on alpine
-FROM ubuntu:disco AS builder
+FROM ubuntu:focal AS builder
 
 WORKDIR /tmp
 ADD texlive.profile /tmp/
@@ -55,6 +55,7 @@ RUN apk update && \
     musl-dev \
     python3 \
     python3-dev \
+    py3-pip \
     imagemagick \
     ghostscript \
     p7zip \
